@@ -34,28 +34,42 @@ typedef struct cuisine_tag{
 	struct cuisine_tag* next;
 }cuis_location;
 typedef struct agent_tag
-{ char id[21];
+{ int  id;
   char name[50];
   char phone_no[11];
+  boolean is_available;
+  char ord_id[21];
   float curr_accu_commi;
-  struct agent_tag *next_agen;
+  struct agent_tag *next;
 }agent;
 typedef struct user_tag
-{ char us_id[21];
+{// char us_id[21];
   char name[50];
   char address[50];
   char phone_no[11];
-  struct user_tag *next_user;
+  //orders *ord;
+  struct user_tag *next;
 }user;
 typedef struct order_tag
 { char res_name[50];
   char res_address[50];
+  char ord_id[21];
   int no_of_items;
   int item_index[100];
-  char ag_id[21];
+  int quantity_index[100];
+ /* char ag_id[21];
   char ag_phone[11];
-  struct order_tag *next_order;
+  */
+  agent *allocated_agent;
+ /* char us_name[50];
+  char us_address[50];
+  char us_phone_no[11];*/
+  user *username;
+  float total_price;
+  location *ordered_restaurant;
+  struct order_tag *next;
 }orders;
+
 menu* create_menu()
 {
 	menu *lptr=(menu*)malloc(sizeof(menu));
@@ -130,8 +144,8 @@ void visit_menu(menu *lptr)
 	printf("%d\n",lptr->no_of_items);
 	while(i<(lptr->no_of_items))
 	{
-		printf("%s\n",lptr->item[i].itemname);
-		printf("%f\n",lptr->item[i].price);
+		printf("%d.	%s\n",i+1,lptr->item[i].itemname);
+		printf("  %f\n",lptr->item[i].price);
 		i++;
 	}
 }
@@ -171,13 +185,43 @@ void Traverse_cuis(cuis_location *lptr)
 		nptr=nptr->next;
 	}
 }
-void search_category(cat_location *nptr)
+void search_category(cat_location *jptr,cat_location *kptr,cat_location *lptr)
 {
-	Traverse_cat(nptr);
+	int x;
+	printf("Enter the category of restaurant you are searching for\t:\n");
+	printf("PRESS 1 FOR RESTAURANT\nPRESS 2 FOR CAFE\nPRESS 3 FOR PUB\n");
+	scanf("%d",&x);
+	if(x==1)
+	{
+		Traverse_cat(jptr);
+	}
+	else if(x==2)
+	{
+		Traverse_cat(kptr);
+	}
+	else if(x==3)
+	{
+		Traverse_cat(lptr);
+	}
 }
-void search_cuisine(cuis_location *nptr)
+void search_cuisine(cuis_location *jptr,cuis_location *kptr,cuis_location *lptr)
 {
-	Traverse_cuis(nptr);
+	int x;
+	printf("Enter the cuisine of restaurant you are searching for\t:\n");
+	printf("PRESS 1 FOR NORTH INDIAN\nPRESS 2 FOR SOUTH INDIAN\nPRESS 3 FOR CONTINENTAL\n");
+	scanf("%d",&x);
+	if(x==1)
+	{
+		Traverse_cuis(jptr);
+	}
+	else if(x==2)
+	{
+		Traverse_cuis(kptr);
+	}
+	else if(x==3)
+	{
+		Traverse_cuis(lptr);
+	}
 }
 void search_area(location* lptr)
 { 
@@ -195,12 +239,12 @@ void search_area(location* lptr)
 	  		if(flag==0)
          	{ 
 			 	printf("Restaurant in area:\n");
-           		printf("%s\n",nptr->address);
+           		printf("%s\n",nptr->name);
            		flag=1;
          	}
         	else
          	{
-            	printf("%s\n",nptr->address);
+            	printf("%s\n",nptr->name);
          	}
       	}
      	nptr=nptr->next;
@@ -211,17 +255,17 @@ void search_area(location* lptr)
   	nptr=lptr;
   	while(nptr!=NULL)
    	{ 
-	   if(strcmp(nptr->zone,y)==0)
+	   if(strcmp(nptr->address,x)!=0&&strcmp(nptr->zone,y)==0)
       	{ 
 			if(flag==0)
          {
 		 	printf("Restaurant in nearby area:\n");
-           	printf("%s\n",nptr->address);
+           	printf("%s\n",nptr->name);
            	flag=1;
          }
         	else
          {
-            printf("%s\n",nptr->address);
+            printf("%s\n",nptr->name);
          }
       	}
      	nptr=nptr->next;
@@ -229,8 +273,214 @@ void search_area(location* lptr)
    	if(flag==0)
    	printf("No restaurant found in nearby areas\n");
 } 
+statuscode insert_agent(agent **ag_ptr,int id,char name[50],char phone_no[11],float curr_accu_comm)
+{	
+	statuscode sc=FAILURE;
+	agent *nptr=(agent*)malloc(sizeof(agent));
+	if(nptr!=NULL)
+	  {  nptr->id=id;
+	     strcpy(nptr->name,name);
+	     strcpy(nptr->phone_no,phone_no);
+	     nptr->curr_accu_commi=curr_accu_comm;
+	     nptr->is_available=TRUE;
+		 nptr->next=*ag_ptr;
+         *ag_ptr=nptr;
+	  	 sc=SUCCESS;
+	  }
+}
+void print_agents(agent *ag_ptr)
+{
+	agent *nptr=ag_ptr;
+	while(nptr!=NULL)
+	{
+			printf("Agent Id\t:%d\n",nptr->id);
+			printf("Agent Name\t:%s\n",nptr->name);
+			printf("Agent Phone No.\t:%s\n",nptr->phone_no);
+			printf("Accumulated Commission\t:%d\n",nptr->curr_accu_commi);
+			if(nptr->is_available==TRUE)
+			{
+				printf("Availability\t:Available\n");
+			}
+			else
+			{
+				printf("Availability\t:Not Available\n");
+				printf("Busy with Order ID\t:%s\n",nptr->ord_id);
+			}
+			nptr=nptr->next;
+	}
+}
+void print_live_orders(orders *optr)
+{
+	int i;orders *nptr=optr;
+	while(nptr!=NULL)
+	{
+			printf("Order Id\t:%d\n",nptr->ord_id);
+			printf("Restaurant Name\t:%s\n",nptr->res_name);
+			printf("Restaurant Address\t:%s\n",nptr->res_address);
+			printf("No. of items\t:%d\n",nptr->no_of_items);
+			for(i=0;i<nptr->no_of_items;i++)
+			{
+				printf("%d. %s\n",i+1,nptr->ordered_restaurant->res_menu->item[nptr->item_index[i]].itemname);
+				printf("%f\n",nptr->ordered_restaurant->res_menu->item[nptr->item_index[i]].price);
+			} 
+	  nptr=nptr->next;   
+	}
+}
+statuscode takeorder(location *all_eatspots,orders **pending_order,cuis_location *north,cuis_location *south,cuis_location *cont,user **users,agent **agent_list,agent **agent_busy_list)
+{ Traverse(all_eatspots);
+  int temp=1;
+  int food_type;
+  char name[100],address[100];
+  statuscode sc=SUCCESS;
+  printf("Enter cuisine you want:1)North Indian 2)South Indian 3)Continental ");
+  scanf("%d",&food_type);
+  if(food_type==1)
+   {
+   	 if(north==NULL)
+   	  { temp=0;
+   	    sc=FAILURE;
+   	    printf("No eating place available for required cuisine\n");
+	  }
+     else
+      { printf("Following are the places available\n");
+        Traverse_cuis(north);
+	  }
+   }
+  else if(food_type==2)
+   { 
+     if(south==NULL)
+   	  {  temp=0;
+   	     sc=FAILURE;
+   	     printf("No eating place available for required cuisine\n");
+	  }
+	 else
+	  {  printf("Following are the places available\n");
+         Traverse_cuis(south);
+	  }	 
+   }
+  else if(food_type==3)
+   {
+   	 if(cont==NULL)
+   	  {
+		 temp=0;
+   	     sc=FAILURE;
+   	     printf("No eating place available for required cuisine\n"); 
+		 
+	  }
+	 else
+	  { printf("Following are the places available\n");
+         Traverse_cuis(cont);
+	  	
+	  }
+   }
+  if(temp==1)
+  {
+  
+  printf("Enter name of the restaurant:");
+  scanf("%s",name);
+  printf("Enter address of the restaurant: ");
+  scanf("%s",address);
+  orders *orde=(orders*)malloc(sizeof(orders));
+  strcpy(orde->res_name,name);
+  strcpy(orde->res_address,address);
+  location *nptr=all_eatspots;
+  temp=0;
+  while(nptr!=NULL && temp==0)
+   { 
+     if((strcmp(nptr->name,name)==0) && (strcmp(nptr->address,address)==0))
+   	  { temp=1;
+   	  }
+	 else
+	  nptr=nptr->next;
+   }
+  if(temp==0)
+   { printf("Invalid name and address: ");
+   }
+  else
+   { printf("You can order now:\n ");
+     printf("Below is the menu: \n");
+	 visit_menu(nptr->res_menu);
+	 orde->ordered_restaurant=nptr;
+	 printf("Enter no of items you want to order: ");
+	 int n;
+	 scanf("%d",&n);
+	 int a[n];
+	 printf("Enter choice nos :");
+	 int i=0,p=0; 
+	 float price=0; 
+	 for(i=0;i<n;i++)
+	  {  printf("ENTER YOUR CHOICE No %d: \n",i+1);
+	  	 scanf("%d",&a[i]);
+	  	 int x;
+	  	 printf("Enter quantity: ");
+	  	 scanf("%d",&x);
+	  	 if(a[i]<=nptr->res_menu->no_of_items)
+	  	  { 
+			orde->item_index[p]=a[i]-1;
+	  	    orde->quantity_index[p]=x;
+	  	    price=price+(orde->ordered_restaurant->res_menu->item[a[i]-1].price)*x;
+	  	  	p++;
+		  }
+		  
+	  }
+	 orde->no_of_items=p;
+	 orde->total_price=price;
+	 char us_phone[50];
+	 printf("ENTER USER PHONE NO: ");
+	 scanf("%s",us_phone);
+	 user *kptr=*users;
+	 temp=0;
+	 while(kptr!=NULL && temp==0)
+	  { if(strcmp(kptr->phone_no,us_phone)==0)
+	     { 
+	       temp=1;
+		 }
+		else
+		 {
+		 	kptr=kptr->next;
+		 }
+	  }
+	 if(temp==0)
+	  { printf("Register new user:\n");
+	    user* new_user=(user*)malloc(sizeof(user));
+	    strcpy(new_user->phone_no,us_phone);
+	    char us_name[50];
+	    char us_address[50];
+	    printf("Enter new user name: ");
+	    scanf("%s",us_name);
+	    printf("Enter new user address: ");
+	    scanf("%s",us_address);
+		strcpy(new_user->name,us_name);   
+		strcpy(new_user->address,us_address);
+		new_user->next=*users;
+		*users=new_user;
+		kptr=new_user;
+		printf("New user registered successfully: ");
+	  }
+	 orde->username=kptr;
+	
+	 if(*agent_list!=NULL)
+	 { agent *alloc_agent;
+	   alloc_agent=*agent_list;
+	   *agent_list=(*agent_list)->next;
+	   orde->allocated_agent=alloc_agent;
+	   alloc_agent->next=*agent_busy_list;
+	   *agent_busy_list=alloc_agent;
+	   orde->next=*pending_order;
+	   *pending_order=orde;
+	   printf("Your order is registered successfully: Agent %s is assigned to you.\nContact no of agent:%s",alloc_agent->name,alloc_agent->phone_no);
+     }
+    else
+     { printf("No free agents available:");
+	 }
+   }
+ 
+  
+  }
+  return sc;
+}
 int main()
-{ 
+{   statuscode sc;
 	cat_location *res=NULL;
 	cat_location *pub=NULL;
 	cat_location *cafe=NULL;
@@ -239,6 +489,13 @@ int main()
 	cuis_location *cont=NULL;
 	location *all_eatspots=NULL;
 	location *fptr;
+	orders *pending_orders=NULL;
+	user *users=NULL;
+	agent *agent_list=NULL,*agent_busy_list=NULL;
+	sc=insert_agent(&agent_list,1111,"RAMU","912345678",0.0);
+	sc=insert_agent(&agent_list,1112,"SHAMU","912345678",0.0);
+	sc=insert_agent(&agent_list,1113,"GOLU","9423123458",0.0);
+	
 	char res_name[50];
     char res_address[100];
     char res_zone[50];
@@ -247,9 +504,8 @@ int main()
     int res_category; 
     int res_cuis_category;
     int i;
-   for(i=0;i<3;i++)
-   {
-	
+   	for(i=0;i<1;i++)
+   	{
     //strcpy(res_name,"PRATHAMESH");
     printf("Enter the name of your restaurant\t:\n");
     scanf("%s",res_name);
@@ -269,7 +525,7 @@ int main()
     scanf("%d",&res_cuis_category);
 	//res_category=1;
     //res_cuis_category=2;
-    statuscode sc;
+ 
     //fptr=all_eatspots;
     sc=insert_eat_location(&all_eatspots,res_name,res_address,res_zone,res_no_of_seats,res_res_menu,res_category,res_cuis_category);
 	if(res_category==1)
@@ -297,33 +553,40 @@ int main()
 		insert_cuis_location(&cont,res_name,res_address);
 	}
    }
-	Traverse(all_eatspots);
-	Traverse_cat(res);
+   //	Traverse(all_eatspots);
+	/*Traverse_cat(res);
     Traverse_cat(cafe);
     Traverse_cat(pub);
-   //char sp_facilities[20][100];
-    /*int i,x,query=-1;
+   //char sp_facilities[20][100];*/
+   
+    int x,query=-1;
 	printf("\t\t\t\t\t  *********************************************\n");
 	printf("\t\t\t\t\t* WELCOME TO OUR LIVE FOOD ORDER TRACKING SYSTEM *\n");
 	printf("\t\t\t\t\t  *********************************************\n");
     printf("\n\n\n");  
     int flag=0;
-    while(query!=0&&flag==0)
+   
+    while(query!=0 && flag==0)
     {
 		printf("\nPress <0> to quit from the system\n");
-    	printf("Press <1> to add a restaurant(add Restaurant)\n");
-    	printf("Press <2> to delete a restaurant(delete Restaurant)\n");
-    	printf("Press <3> to view details of all restaurants\n");
+    	printf("Press <1> to search a restaurant by category\t:\n");
+    	printf("Press <2> to search a restaurant by cuisine\t:\n");
+    	printf("Press <3> search a restaurant by area\t:\n");
+    	printf("Press <4> to insert a eat location\t:\n");
+    	printf("Press <5> to take order from a eating pot\t:\n");
+    	printf("Press <6> to get the list of all live orders\t:\n");
+    	scanf("%d",&query);
     	switch(query)
 		{
     		case 0:flag=1;break;
-        	case 1:insert_eat_location();break;
-        	case 2:deleteRestaurant();break;
-
-      
-        	default:printf("Please enter appropriate choice");
+        	case 1:search_category(res,cafe,pub);break;
+        	case 2:search_cuisine(north,south,cont);break;
+        	case 3:search_area(all_eatspots);break;
+        	case 5:takeorder(all_eatspots,&pending_orders,north,south,cont,&users,&agent_list,&agent_busy_list);break;
+        	case 6:print_live_orders(pending_orders);break;
+			default:printf("Please enter appropriate choice");
         			break;
     	}
-	}*/     
+	}    
    return 0;   
 }
