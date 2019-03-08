@@ -326,7 +326,7 @@ void print_agents(agent *ag_ptr)
 			printf("Agent Id\t:%d\n",nptr->id);
 			printf("Agent Name\t:%s\n",nptr->name);
 			printf("Agent Phone No.\t:%s\n",nptr->phone_no);
-			printf("Accumulated Commission\t:%d\n",nptr->curr_accu_commi);
+			printf("Accumulated Commission\t:%f\n",nptr->curr_accu_commi);
 			if(nptr->is_available==TRUE)
 			{
 				printf("Availability\t:Available\n");
@@ -518,9 +518,13 @@ statuscode takeorder(location *all_eatspots,orders **pending_order,cuis_location
   }
   return sc;
 }
-statuscode delivery(int order_id,orders **pending_orders,agent **agent_list,agent **agent_busy_list)
+statuscode delivery(orders **pending_orders,agent **agent_list,agent **agent_busy_list)
 { orders *nptr=*pending_orders,*kptr;
   orders *prev=NULL;
+  statuscode sc=SUCCESS;
+  int order_id;
+  printf("Enter order id: ");
+  scanf("%d",&order_id);
   int temp=0;
   while(nptr!=NULL && temp==0)
     { if(nptr->ord_id==order_id)
@@ -535,9 +539,11 @@ statuscode delivery(int order_id,orders **pending_orders,agent **agent_list,agen
   if(temp==0)
    {
    	  printf("Order with given id does not exist:");
+   	  sc=FAILURE;
    }
   else
    { kptr=nptr;
+     printf("Price=%f",kptr->total_price);
      if(prev==NULL)
       { *pending_orders=nptr->next;
       }
@@ -545,7 +551,7 @@ statuscode delivery(int order_id,orders **pending_orders,agent **agent_list,agen
       { prev->next=nptr->next;
       }
      kptr->next=NULL;
-     kptr->allocated_agent->curr_accu_commi=kptr->allocated_agent->curr_accu_commi+0.10*kptr->total_price;
+    // kptr->allocated_agent->curr_accu_commi=(kptr->allocated_agent->curr_accu_commi)+0.10*kptr->total_price;
    	 agent *p=*agent_busy_list,*pr=NULL;
    	 temp=0;
    	 while(p!=NULL && temp==0)
@@ -558,6 +564,8 @@ statuscode delivery(int order_id,orders **pending_orders,agent **agent_list,agen
 		  	p=p->next;
 		  }
 	  }
+	p->curr_accu_commi=(p->curr_accu_commi)+((1.0*kptr->total_price)/10);
+	free(kptr);
    	if(temp==1)
    	{
 	   
@@ -573,6 +581,72 @@ statuscode delivery(int order_id,orders **pending_orders,agent **agent_list,agen
 	  } 
     }
    }
+   return sc;
+}
+statuscode cancel_order(orders **pending_orders,agent **agent_list,agent **agent_busy_list)
+{ orders *nptr=*pending_orders,*kptr;
+  orders *prev=NULL;
+  statuscode sc=SUCCESS;
+  int order_id;
+  printf("Enter order id: ");
+  scanf("%d",&order_id);
+  int temp=0;
+  while(nptr!=NULL && temp==0)
+    { if(nptr->ord_id==order_id)
+       { 
+       	 temp=1;
+	   }
+	  else
+	   {prev=nptr;
+	   	nptr=nptr->next;
+	   }
+	}
+  if(temp==0)
+   {
+   	  printf("Order with given id does not exist:");
+   	  sc=FAILURE;
+   }
+  else
+   { kptr=nptr;
+     printf("Price=%f",kptr->total_price);
+     if(prev==NULL)
+      { *pending_orders=nptr->next;
+      }
+     else 
+      { prev->next=nptr->next;
+      }
+     kptr->next=NULL;
+    // kptr->allocated_agent->curr_accu_commi=(kptr->allocated_agent->curr_accu_commi)+0.10*kptr->total_price;
+   	 agent *p=*agent_busy_list,*pr=NULL;
+   	 temp=0;
+   	 while(p!=NULL && temp==0)
+   	  { if(p->id == kptr->allocated_agent->id)
+	      { 
+	        temp=1;
+		  }
+		else
+		  { pr=p;
+		  	p=p->next;
+		  }
+	  }
+	//p->curr_accu_commi=(p->curr_accu_commi)+((1.0*kptr->total_price)/10);
+	free(kptr);
+   	if(temp==1)
+   	{
+	   
+	if(pr==NULL)
+   	  { *agent_busy_list=(*agent_busy_list)->next;
+	    p->next=*agent_list;
+	    *agent_list=p;
+	  }
+	 else
+	  { pr->next=p->next;
+	    p->next=*agent_list;
+	    *agent_list=p;
+	  } 
+    }
+   }
+   return sc
 }
 int main()
 {   statuscode sc;
@@ -672,6 +746,9 @@ int main()
     	printf("Press <4> to insert a eat location\t:\n");
     	printf("Press <5> to take order from a eating pot\t:\n");
     	printf("Press <6> to get the list of all live orders\t:\n");
+    	printf("Press <7> to get the details of available agents:\n");
+    	printf("Press <8> to complete delivery of a order:\n");
+    	printf("Press <9> to get the details of busy agents:\n");
     	scanf("%d",&query);
     	switch(query)
 		{
@@ -681,6 +758,9 @@ int main()
         	case 3:search_area(all_eatspots);break;
         	case 5:takeorder(all_eatspots,&pending_orders,north,south,cont,&users,&agent_list,&agent_busy_list);break;
         	case 6:print_live_orders(pending_orders);break;
+        	case 7:print_agents(agent_list);break;
+        	case 8:sc=delivery(&pending_orders,&agent_list,&agent_busy_list);
+        	case 9:print_agents(agent_busy_list);break;
 			default:printf("Please enter appropriate choice");
         			break;
     	}
