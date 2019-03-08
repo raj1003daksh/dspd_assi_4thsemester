@@ -646,7 +646,7 @@ statuscode cancel_order(orders **pending_orders,agent **agent_list,agent **agent
 	  } 
     }
    }
-   return sc
+   return sc;
 }
 int main()
 {   statuscode sc;
