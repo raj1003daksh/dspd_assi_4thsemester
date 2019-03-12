@@ -589,13 +589,15 @@ statuscode delivery(orders **pending_orders,agent **agent_list,agent **agent_bus
 	 	 int temp1=0;
 	 	 while(xptr!=NULL && temp1==0)
 	 	  { if(strcmp(xptr->name,itemname)==0)
-	 	      { xptr->no_of_time++;
+	 	      {// printf("FOUND IT:\n ");
+			    (xptr->no_of_time)++;
 			    temp1=1;
 			  }
 			xptr=xptr->next;
 		  }
 		if(temp1==0)
-		 { item_name *xy=(item_name*)malloc(sizeof(item_name));
+		 {// printf("allocating space:\n");
+		   item_name *xy=(item_name*)malloc(sizeof(item_name));
 		   strcpy(xy->name,itemname);
 		   xy->no_of_time=1;
 		   xy->next=kptr->username->ordered_items;
@@ -738,7 +740,7 @@ void print_user_history(orders **archived_orders)
    int i;
    printf("Enter phone no of user: ");
    scanf("%s",phone);
-   orders *nptr;
+   orders *nptr=*archived_orders;
    int temp=0;
    while(nptr!=NULL)
     {  
@@ -868,13 +870,52 @@ void  print_favourite_item(user* users)
         while(xptr!=NULL)
          { if(xptr->no_of_time>max)
          	{ strcpy(iname,xptr->name);
+         	  max=xptr->no_of_time;
 			}
 		  xptr=xptr->next;	
 		 }
-		printf("The favourite item of user is %s\n",iname);
+		printf("The favourite items of user are \n");
+		xptr=nptr->ordered_items;
+		while(xptr!=NULL)
+	      { if(xptr->no_of_time==max)
+	      	 { printf("%s\n",xptr->name);
+			   
+			 }
+	      	
+	      	xptr=xptr->next;
+		  }
       }
 	}
 	
+}
+void print_ordered_item(user *users)
+{   char phone[11];
+	printf("Enter the phone no:\n");
+	scanf("%s",phone);
+	user *nptr=users;
+	int temp=0;
+	while(nptr!=NULL && temp==0)
+	 {if(strcmp(nptr->phone_no,phone)==0)
+	   {
+	     temp=1;  
+	   }
+	  else
+	  {nptr=nptr->next;
+      }
+	 }
+	if(temp==1)
+	{
+
+	item_name *xptr=nptr->ordered_items;
+	while(xptr!=NULL)
+	 {  printf("Item name: ");
+	 	printf("%s ",xptr->name);
+	 	printf("No of times: %d\n",xptr->no_of_time);
+	 	xptr=xptr->next;
+	 }
+    }
+    else
+     printf("User not found\n");
 }
 int main()
 {   statuscode sc;
@@ -984,6 +1025,7 @@ int main()
     	printf("Press <14> to insert new restaurant:\n");
     	printf("Press <15> to insert new agent:\n");
     	printf("Press <16> to print users favourite item:\n");
+    	printf("Press <17> to print ordered item of particular items:\n");
     	scanf("%d",&query);
     	switch(query)
 		{
@@ -1004,6 +1046,7 @@ int main()
             case 14:sc=insert_eating_location(&all_eatspots,res_zone,res_name,res_address,res_no_of_seats,res_category,res_cuis_category,res_res_menu,&res,&cafe,&pub,&north,&south,&cont);break;
             case 15:sc=insert_new_agent(&agent_list);break;
             case 16:print_favourite_item(users);break;
+            case 17:print_ordered_item(users);break;
 			default:printf("Please enter appropriate choice");
         			break;
     	}
